@@ -1,0 +1,127 @@
+#include <iostream>
+// #define GLAD_CL_IMPLEMENTATION
+
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
+
+// ========= SHADERS =========
+const char* vertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec2 aPos;
+void main()
+{
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}
+)";
+
+const char* fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+void main()
+{
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0); // RED color
+}
+)";
+
+int main()
+{
+    if (!glfwInit()) {
+        std::cout << "Failed to initialize GLFW\n";
+        return -1;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    if (!window)
+    {
+        std::cout << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
+
+     if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
+        std::cout << "Failed to initialize GLAD\n";
+        return -1;
+    }
+
+    // ===== Compile vertex shader =====
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    // ===== Compile fragment shader =====
+    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    // ===== Link program =====
+    unsigned int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+
+    float vertices[] = {
+         0.0f,  0.5f,   // top
+        -0.5f, -0.5f,   // left
+         0.5f, -0.5f    // right
+    };
+
+    float adv_vertices[] = {
+        // location(0) vec2      // COLOR(1)             //tEX (2)      -> ROW_TITLE = 3
+         0.0f,  0.5f,           1.0f,  0.5f, 1.0f,      0.0f,  0.5f, // 0 3 
+        -0.5f, -0.5f,           1.0f,  0.5f, 1.0f,      0.0f,  0.5f, // rows = 7 -> (7)*sizeof(float) = stride
+         0.5f, -0.5f,           1.0f,  0.5f, 1.0f,      0.0f,  0.5f  //
+    };
+
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO); // SetID
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(
+        0,              // location = 0
+        2,              // vec2
+        GL_FLOAT,
+        GL_FALSE,
+        2 * sizeof(float),
+        (void*)0
+    );
+
+    glEnableVertexAttribArray(0);
+
+    // with adv_vertices variable
+    // glVertexAttribPointer(ROW_TITLE_INDEX, number_of_element in A ROW_TITLE_INDEX, GL_FLOAT, GL_FALSE, stride, ofset) // INDEX = 0
+    // glVertexAttribPointer(ROW_TITLE_INDEX, number_of_element in A ROW_TITLE_INDEX, GL_FLOAT, GL_FALSE, stride, ofset) // INDEX = 1
+    // glVertexAttribPointer(ROW_TITLE_INDEX, number_of_element in A ROW_TITLE_INDEX, GL_FLOAT, GL_FALSE, stride, ofset) // INDEX = 2
+    // glEnableVertexAttribArray(INDEX 0 1 2);
+
+    while (!glfwWindowShouldClose(window))
+    {
+        glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+
+        // draw
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    return 0;
+}
