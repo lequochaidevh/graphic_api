@@ -1,0 +1,53 @@
+cmake_minimum_required(VERSION 3.16)
+
+if(DEFINED ENV{SRC_NAME})
+  set(SRC_NAME $ENV{SRC_NAME})
+else()
+  set(SRC_NAME "default SRC_NAME")
+endif()
+
+project(excute)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(VENDOR_ROOT "/home/devh/Build_EmbSys/Engines/Vendors")
+set(platform "x86_64_u20")
+
+find_package(GLEW REQUIRED)
+
+# --- Add GLFW ---
+add_subdirectory("${VENDOR_ROOT}/glfw" "${CMAKE_BINARY_DIR}/glfw_build")
+
+add_executable(${PROJECT_NAME}
+    ${SRC_NAME}
+)
+
+# --- Link ---
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+# --- OpenGL ---
+if(UNIX)
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+    OpenGL::GL
+    glfw
+    GLEW::GLEW )
+endif()
+
+# --- Include dirs (GLAD & GLFW headers) ---
+target_include_directories(${PROJECT_NAME} PRIVATE
+    "${VENDOR_ROOT}/glfw/include"
+    "${VENDOR_ROOT}/x86_64_u20/glad/include"
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}/"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/res"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res"
+    COMMENT "Copying resources to build directory..."
+)

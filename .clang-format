@@ -1,6 +1,6 @@
 BasedOnStyle: Google
 IndentWidth: 4
-ColumnLimit: 90
+ColumnLimit: 80
 UseTab: Never
 
 SortIncludes: false
