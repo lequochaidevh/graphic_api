@@ -10,6 +10,7 @@ project(excute)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(VENDOR_ROOT "/home/devh/Build_EmbSys/Engines/Vendors")
 set(platform "x86_64_u20")

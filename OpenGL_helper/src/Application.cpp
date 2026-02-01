@@ -6,12 +6,40 @@
 #include <cstring>
 #include <sstream>
 #include <filesystem>
+#include <csignal>  // raise(SIGTRAP)
+
+#if defined(__MSVC__)
+#define BREAK_POINT __debugbreak()
+#else
+#define BREAK_POINT raise(SIGTRAP)
+#endif
 
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
 
 #define ERR_HANDLING_ACTIVE true
+
+#define ASSERT__(x) \
+    if (!(x)) BREAK_POINT;
+
+#define GLCall(x)   \
+    GLClearError(); \
+    x;              \
+    ASSERT__(GLLogCall())
+
+static void GLClearError() {
+    while (glGetError() != GL_NO_ERROR) {
+    }
+}
+
+static bool GLLogCall() {
+    while (GLenum error = glGetError()) {
+        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
+        return false;
+    }
+    return true;
+}
 
 struct ShaderProgramSource {
     std::string VertexSource;
@@ -178,7 +206,10 @@ int main() {
         // wireframe mode
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // default
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, 0));
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
