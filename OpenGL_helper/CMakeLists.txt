@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(DEFINED ENV{SRC_NAME})
-  set(SRC_NAME $ENV{SRC_NAME})
+#   set(SRC_NAME $ENV{SRC_NAME})
+  file(GLOB SRC_NAME 
+    "${CMAKE_SOURCE_DIR}/$ENV{SRC_NAME}"
+    )
 else()
   set(SRC_NAME "default SRC_NAME")
 endif()
+
+
 
 project(excute)
 

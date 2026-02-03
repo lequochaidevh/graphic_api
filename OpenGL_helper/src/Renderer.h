@@ -1,0 +1,26 @@
+#pragma once
+#include <csignal>  // raise(SIGTRAP)
+
+#if defined(__MSVC__)
+#define BREAK_POINT __debugbreak()
+#else
+#define BREAK_POINT raise(SIGTRAP)
+#endif
+
+#include <GL/glew.h>
+
+#include <GLFW/glfw3.h>
+
+#define ERR_HANDLING_ACTIVE true
+
+#define ASSERT_GL(x) \
+    if (!(x)) BREAK_POINT;
+
+#define GLCall(x)   \
+    GLClearError(); \
+    x;              \
+    ASSERT_GL(GLLogCall())
+
+void GLClearError();
+
+bool GLLogCall();

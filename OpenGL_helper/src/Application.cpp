@@ -6,41 +6,9 @@
 #include <cstring>
 #include <sstream>
 #include <filesystem>
-#include <csignal>  // raise(SIGTRAP)
-
-#if defined(__MSVC__)
-#define BREAK_POINT __debugbreak()
-#else
-#define BREAK_POINT raise(SIGTRAP)
-#endif
-
-#include <GL/glew.h>
-
-#include <GLFW/glfw3.h>
-
-#define ERR_HANDLING_ACTIVE true
-
-#define ASSERT__(x) \
-    if (!(x)) BREAK_POINT;
-
-#define GLCall(x)   \
-    GLClearError(); \
-    x;              \
-    ASSERT__(GLLogCall())
-
-static void GLClearError() {
-    while (glGetError() != GL_NO_ERROR) {
-    }
-}
-
-static bool GLLogCall() {
-    while (GLenum error = glGetError()) {
-        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
-        return false;
-    }
-    return true;
-}
-
+#include "Renderer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 struct ShaderProgramSource {
     std::string VertexSource;
     std::string FragmentSource;
@@ -166,21 +134,26 @@ int main() {
     // 3 pos + 3 color + 2 tex = 8
     // stride = 8 * sizeof(float)
 
-    unsigned int VAO, VBO, EBO;
+    unsigned int VAO;
+    // unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
 
     // VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // glGenBuffers(1, &VBO);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+    // GL_STATIC_DRAW);
+    VertexBuffer VBO(vertices, sizeof(vertices));
 
     // EBO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
+    // glGenBuffers(1, &EBO);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+    //              GL_STATIC_DRAW);
+    IndexBuffer EBO(indices,
+                    sizeof(indices) / sizeof(unsigned int));  // 6 elements
 
     // ===== ATTRIBUTE 0 : POSITION =====
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
@@ -201,7 +174,7 @@ int main() {
 
     GLCall(glUseProgram(shaderProgram));
     GLCall(int location = glGetUniformLocation(shaderProgram, "u_Color"));
-    ASSERT__(location != -1 && "Not found Uniform");
+    ASSERT_GL(location != -1 && "Not found Uniform");
     GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
     glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
 
