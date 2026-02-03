@@ -137,13 +137,15 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    GLCall(glfwSwapInterval(1));
+
     if (glewInit() != GLEW_OK) {
         std::cout << "Init Glew Failed\n";
         return -1;
     }
 
     std::cout << glGetString(GL_VERSION) << std::endl;
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+    ShaderProgramSource source = ParseShader("res/shaders/UniformBlink.shader");
     std::cout << "VERTEX source:\n " << source.VertexSource << std::endl;
     std::cout << "FRAGMENT source:\n " << source.FragmentSource << std::endl;
 
@@ -197,18 +199,32 @@ int main() {
 
     glBindVertexArray(0);
 
-    while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    GLCall(glUseProgram(shaderProgram));
+    GLCall(int location = glGetUniformLocation(shaderProgram, "u_Color"));
+    ASSERT__(location != -1 && "Not found Uniform");
+    GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
+    glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
 
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
+    float r        = 0.0;
+    float increase = 0.05;
+
+    while (!glfwWindowShouldClose(window)) {
+        GLCall(glClear(GL_COLOR_BUFFER_BIT));
+
+        GLCall(glBindVertexArray(VAO));
         // wireframe mode
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // default
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // default
+        GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
 
-        // GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, 0));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
+        if (r > 1.0f)
+            increase = -0.01f;
+        else if (r < 0.01f)
+            increase = 0.01f;
+
+        r += increase;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
