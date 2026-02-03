@@ -1,5 +1,6 @@
 #pragma once
 #include <csignal>  // raise(SIGTRAP)
+#include <iostream>
 
 #if defined(__MSVC__)
 #define BREAK_POINT __debugbreak()

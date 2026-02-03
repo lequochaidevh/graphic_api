@@ -205,4 +205,7 @@ int main() {
 
     glDeleteProgram(shaderProgram);
     glfwTerminate();
+
+    std::cout << "End main" << std::endl;
+    return 0;
 }
