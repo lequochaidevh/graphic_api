@@ -133,46 +133,11 @@ int main() {
 
     unsigned int indices[] = {0, 1, 3, 1, 2, 3};
 
-    // each vertex = 8 float
-    // 3 pos + 3 color + 2 tex = 8
-    // stride = 8 * sizeof(float)
-
-    // unsigned int VAO, VBO, EBO;
-
-    // VBO
-    // glGenBuffers(1, &VBO);
-    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-    // GL_STATIC_DRAW);
     VertexBuffer VBO(vertices, sizeof(vertices));
 
-    // EBO
-    // glGenBuffers(1, &EBO);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-    //              GL_STATIC_DRAW);
     IndexBuffer EBO(indices,
                     sizeof(indices) / sizeof(unsigned int));  // 6 elements
 
-    // VAO
-    // glGenVertexArrays(1, &VAO);
-
-    // glBindVertexArray(VAO);
-
-    // // ===== ATTRIBUTE 0 : POSITION =====
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                       (void *)0);
-    // glEnableVertexAttribArray(0);
-
-    // // ===== ATTRIBUTE 1 : COLOR =====
-    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                       (void *)(3 * sizeof(float)));
-    // glEnableVertexAttribArray(1);
-
-    // // ===== ATTRIBUTE 2 : TEXCOORD =====
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                       (void *)(6 * sizeof(float)));
-    // glEnableVertexAttribArray(2);
     VertexArray        VAO;
     VertexBufferLayout layout;
     layout.Push<float>(3);  // POSITION
@@ -183,11 +148,10 @@ int main() {
     // Need Init EBO affter VAO
     EBO.Bind();  // CRITICALLL!!! 4. Bind EBO while VAO is still bound!
 
-    // Now it is safe to unbind
-    // VAO.Unbind();
-    // VBO.Unbind();
-    // EBO.Unbind();
-    // glBindVertexArray(0);
+    // Now it is safe to unbind (opt)
+    VAO.Unbind();
+    VBO.Unbind();
+    EBO.Unbind();
 
     GLCall(glUseProgram(shaderProgram));
     GLCall(int location = glGetUniformLocation(shaderProgram, "u_Color"));
@@ -207,11 +171,6 @@ int main() {
         lastFrame          = currentFrame;
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
         VAO.Bind();
-        // GLCall(glBindVertexArray(VAO));
-        // wireframe mode
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // default
-        // GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
 
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
@@ -220,7 +179,6 @@ int main() {
         else if (r < 0.01f)
             increase = 0.01f;
 
-        // r += increase;
         r += blinkSpeed * deltaTime;
         float colorValue =
             (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
