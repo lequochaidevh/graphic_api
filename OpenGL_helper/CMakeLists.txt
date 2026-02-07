@@ -40,7 +40,8 @@ if(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE 
     OpenGL::GL
     glfw
-    GLEW::GLEW )
+    GLEW::GLEW 
+    ${NVML_LIB})
 endif()
 
 # --- Include dirs (GLAD & GLFW headers) ---
