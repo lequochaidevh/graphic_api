@@ -16,6 +16,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 #include <nvml.h>
 #include <iostream>
 
@@ -68,10 +71,15 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
+    glm::mat4 proj =
+        glm::ortho(-2.0, 2.0, -1.5, 1.5, -1.0, 1.0);  // calib width:height 4:3
+
     Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
+    shader.SetUniform4f("u_Color", 0.0f, 0.3f, 0.8f, 1.0f);
+    shader.SetUniformMat4f("u_MVP", proj);
 
-    Texture texture("res/textures/noBG.png");
+    Texture texture("res/textures/C_nobgr.png");
     texture.Bind();                       // slot = 0 default
     shader.SetUniform1i("u_Texture", 0);  // slot = 0
 
@@ -131,7 +139,7 @@ int main() {
         colorValue = (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
 
         shader.Bind();
-        // shader.SetUniform4f("u_Color", colorValue, 0.3f, 0.8f, 1.0f);
+        shader.SetUniform4f("u_Color", 0.3f, 0.8f, colorValue, 1.0f);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

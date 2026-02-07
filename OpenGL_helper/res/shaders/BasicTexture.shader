@@ -7,9 +7,11 @@ layout (location = 2) in vec2 aTexCoord;
 
 out vec2 v_TexCoord;
 
+uniform mat4 u_MVP; // model view projection matrix
+
 void main()
 {
-    gl_Position = vec4(aPosition, 1.0);
+    gl_Position = u_MVP * vec4(aPosition, 1.0);
     v_TexCoord = aTexCoord;
 }
 
@@ -26,5 +28,5 @@ uniform sampler2D u_Texture;
 void main()
 {
     vec4 texColor = texture(u_Texture, v_TexCoord);
-    color = texColor;
+    color = texColor * u_Color;
 }
