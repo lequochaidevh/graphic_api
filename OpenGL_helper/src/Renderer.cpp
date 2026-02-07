@@ -19,7 +19,11 @@ Renderer::Renderer() {}
 
 Renderer::~Renderer() {}
 
-void Renderer::Clear() { GLCall(glClear(GL_COLOR_BUFFER_BIT)); }
+void Renderer::Clear(float r) {
+    GLCall(glClearColor(r, 0.4, 0.2, 1));  //
+    GLCall(glClear(GL_COLOR_BUFFER_BIT));
+    std::cout << r << std::endl;
+}
 
 void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,
                     const Shader& shader) {

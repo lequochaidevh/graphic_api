@@ -38,6 +38,8 @@ class Renderer {
     ~Renderer();
 
     void Clear();
+    void Clear(float r);
+
     void Draw(const VertexArray& va, const IndexBuffer& ib,
               const Shader& shader);
 };

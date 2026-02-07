@@ -71,7 +71,7 @@ int main() {
     Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
 
-    Texture texture("res/textures/C_background.png");
+    Texture texture("res/textures/noBG.png");
     texture.Bind();                       // slot = 0 default
     shader.SetUniform1i("u_Texture", 0);  // slot = 0
 
@@ -114,12 +114,13 @@ int main() {
     float lastFrame  = 0.0f;
     float blinkSpeed = 1.5f;  // Adjust this to change speed
 
-    Renderer renderer;
+    static float colorValue = 0;
+    Renderer     renderer;
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         float deltaTime    = currentFrame - lastFrame;
         lastFrame          = currentFrame;
-        renderer.Clear();
+        renderer.Clear(colorValue);
         renderer.Draw(VAO, EBO, shader);
         if (r > 1.0f)
             increase = -0.01f;
@@ -127,8 +128,7 @@ int main() {
             increase = 0.01f;
 
         r += blinkSpeed * deltaTime;
-        float colorValue =
-            (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
+        colorValue = (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
 
         shader.Bind();
         // shader.SetUniform4f("u_Color", colorValue, 0.3f, 0.8f, 1.0f);
