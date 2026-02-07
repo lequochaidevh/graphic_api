@@ -7,6 +7,8 @@
 #include <sstream>
 #include <filesystem>
 #include <cmath>
+#include <thread>
+#include <chrono>
 
 #include "Renderer.h"
 #include "VertexBufferLayout.h"
@@ -62,7 +64,7 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    GLCall(glfwSwapInterval(10));
+    GLCall(glfwSwapInterval(500));
 
     if (glewInit() != GLEW_OK) {
         std::cout << "Init Glew Failed\n";
@@ -139,11 +141,12 @@ int main() {
         colorValue = (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
 
         shader.Bind();
-        shader.SetUniform4f("u_Color", 0.3f, 0.8f, colorValue, 1.0f);
+        shader.SetUniform4f("u_Color", 0.3f, 0.8f, 1.0f - colorValue, 1.0f);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
         printGPUStats();
+        std::this_thread::sleep_for(std::chrono::milliseconds(66));  // 15fps
     }
 
     glfwTerminate();
