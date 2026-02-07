@@ -85,6 +85,9 @@ int main() {
 
     unsigned int indices[] = {0, 1, 3, 1, 2, 3};
 
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     VertexBuffer VBO(vertices, sizeof(vertices));
 
     IndexBuffer EBO(indices,
