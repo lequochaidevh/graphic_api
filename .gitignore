@@ -12,3 +12,4 @@ tmp/
 test*
 private_files/
 coc.vim
+reference_nopub

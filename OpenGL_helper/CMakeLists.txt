@@ -1,13 +1,25 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(DEFINED ENV{SRC_NAME})
-#   set(SRC_NAME $ENV{SRC_NAME})
-  file(GLOB SRC_NAME 
-    "${CMAKE_SOURCE_DIR}/$ENV{SRC_NAME}"
-    )
+  # 1. Get the string from environment
+  set(SRC_STRING "$ENV{SRC_NAME}")
+
+  # 2. Convert spaces to semicolons to make it a CMake list
+  string(REPLACE " " ";" SRC_LIST "${SRC_STRING}")
+
+  # 3. Resolve paths relative to the source directory
+  set(SRC_NAME "")
+  foreach(FILE_PATH ${SRC_LIST})
+      # Removes the './' prefix if present and makes it absolute
+      get_filename_component(ABS_FILE "${FILE_PATH}" ABSOLUTE BASE_DIR "${CMAKE_SOURCE_DIR}")
+      list(APPEND SRC_NAME "${ABS_FILE}")
+  endforeach()
 else()
-  set(SRC_NAME "default SRC_NAME")
+  set(SRC_NAME "default_file.cpp")
 endif()
+
+# Check the result
+message(STATUS "Files to compile: ${SRC_NAME}")
 
 
 

@@ -14,6 +14,7 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "Texture.h"
 
 #include <nvml.h>
 #include <iostream>
@@ -67,8 +68,12 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    Shader shader("res/shaders/UniformBlink.shader");
+    Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
+
+    Texture texture("res/textures/C_background.png");
+    texture.Bind();                       // slot = 0 default
+    shader.SetUniform1i("u_Texture", 0);  // slot = 0
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
@@ -123,7 +128,7 @@ int main() {
             (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
 
         shader.Bind();
-        shader.SetUniform4f("u_Color", colorValue, 0.3f, 0.8f, 1.0f);
+        // shader.SetUniform4f("u_Color", colorValue, 0.3f, 0.8f, 1.0f);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
