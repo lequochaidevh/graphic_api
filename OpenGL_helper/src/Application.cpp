@@ -12,82 +12,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
-struct ShaderProgramSource {
-    std::string VertexSource;
-    std::string FragmentSource;
-};
-
-static ShaderProgramSource ParseShader(const std::string &filepath) {
-    std::ifstream stream(filepath);
-    if (!stream.is_open()) {
-        std::cout << "Current path: " << std::filesystem::current_path()
-                  << std::endl;
-        std::cerr << "Can not found file at: " << filepath << std::endl;
-    }
-    enum class ShaderType { NONE = -1, VERTEX = 0, FRAGMENT = 1 };
-
-    std::string       line;
-    std::stringstream ss[2];
-    ShaderType        type = ShaderType::NONE;
-    while (getline(stream, line)) {
-        if (line.find("#shader") != std::string::npos) {
-            if (line.find("vertex") != std::string::npos) {
-                // set mode to vertex
-                type = ShaderType::VERTEX;
-            } else if (line.find("fragment") != std::string::npos) {
-                // setmode to fragment
-                type = ShaderType::FRAGMENT;
-            }
-        } else {
-            if (type != ShaderType::NONE) {
-                ss[(int)type] << line << '\n';
-            }
-        }
-    }
-
-    return {ss[0].str(), ss[1].str()};
-}
-
-static unsigned int CompileShader(unsigned int type, const std::string &source,
-                                  bool errHandlingEnable = false) {
-    unsigned int id  = glCreateShader(type);
-    const char * src = source.c_str();
-    glShaderSource(id, 1, &src, NULL);
-    glCompileShader(id);
-
-    if (errHandlingEnable) {
-        int  success;
-        char infoLog[512];
-        glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-
-        if (!success) {
-            glGetShaderInfoLog(id, 512, NULL, infoLog);
-            std::cout << "ERROR::SHADER::_::COMPILATION_FAILED\n"
-                      << infoLog << std::endl;
-        }
-    }
-
-    return id;
-}
-
-static unsigned int CreateShader(const std::string &vertexShader,
-                                 const std::string &fragmentShader) {
-    // ===== Compile fragment shader =====
-    unsigned int vshader =
-        CompileShader(GL_VERTEX_SHADER, vertexShader, ERR_HANDLING_ACTIVE);
-    unsigned int fshader =
-        CompileShader(GL_FRAGMENT_SHADER, fragmentShader, ERR_HANDLING_ACTIVE);
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vshader);
-    glAttachShader(shaderProgram, fshader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vshader);
-    glDeleteShader(fshader);
-
-    return shaderProgram;
-}
+#include "Shader.h"
 
 int main() {
     if (!glfwInit()) {
@@ -116,12 +41,9 @@ int main() {
     }
 
     std::cout << glGetString(GL_VERSION) << std::endl;
-    ShaderProgramSource source = ParseShader("res/shaders/UniformBlink.shader");
-    std::cout << "VERTEX source:\n " << source.VertexSource << std::endl;
-    std::cout << "FRAGMENT source:\n " << source.FragmentSource << std::endl;
 
-    unsigned int shaderProgram =
-        CreateShader(source.VertexSource, source.FragmentSource);
+    Shader shader("res/shaders/UniformBlink.shader");
+    shader.Bind();
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
@@ -146,18 +68,12 @@ int main() {
     VAO.AddBuffer(VBO, layout);
 
     // Need Init EBO affter VAO
-    EBO.Bind();  // CRITICALLL!!! 4. Bind EBO while VAO is still bound!
+    EBO.Bind();  // safety CRITICALLL!!! 4. Bind EBO while VAO is still bound!
 
     // Now it is safe to unbind (opt)
     VAO.Unbind();
     VBO.Unbind();
     EBO.Unbind();
-
-    GLCall(glUseProgram(shaderProgram));
-    GLCall(int location = glGetUniformLocation(shaderProgram, "u_Color"));
-    ASSERT_GL(location != -1 && "Not found Uniform");
-    GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
-    glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
 
     float r        = 0.0;
     float increase = 0.05;
@@ -182,12 +98,14 @@ int main() {
         r += blinkSpeed * deltaTime;
         float colorValue =
             (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
-        GLCall(glUniform4f(location, colorValue, 0.3f, 0.8f, 1.0f));
+
+        shader.Bind();
+        shader.SetUniform4f("u_Color", colorValue, 0.3f, 0.8f, 1.0f);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteProgram(shaderProgram);
     glfwTerminate();
 
     std::cout << "End main" << std::endl;
