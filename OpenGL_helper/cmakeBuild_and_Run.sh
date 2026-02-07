@@ -50,7 +50,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-set_default_if_not_exist "SRC_NAME" $(ls 001*cpp | head -1)
+# set_default_if_not_exist "SRC_NAME" $(ls 001*cpp | head -1)
+set_default_if_not_exist "SRC_NAME" "${SOURCE_CPP}"
 
 rm -rf build
 
