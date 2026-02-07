@@ -21,6 +21,8 @@ set(VENDOR_ROOT "/home/devh/Build_EmbSys/Engines/Vendors")
 set(platform "x86_64_u20")
 
 find_package(GLEW REQUIRED)
+# Tell the linker to find the NVIDIA Management Library
+find_library(NVML_LIB NAMES nvidia-ml)
 
 # --- Add GLFW ---
 add_subdirectory("${VENDOR_ROOT}/glfw" "${CMAKE_BINARY_DIR}/glfw_build")

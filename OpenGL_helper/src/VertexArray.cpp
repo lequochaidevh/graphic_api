@@ -1,5 +1,8 @@
 #include "VertexArray.h"
 #include "Renderer.h"
+
+#include "VertexBufferLayout.h"
+
 #include <iostream>
 VertexArray::VertexArray() { GLCall(glGenVertexArrays(1, &m_RenderID)); }
 
@@ -11,20 +14,6 @@ void VertexArray::AddBuffer(const VertexBuffer&       vb,
     vb.Bind();
     const auto& elements = layout.GetElement();
 
-    // // ===== ATTRIBUTE 0 : POSITION =====
-    // GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                              (void*)0));
-    // GLCall(glEnableVertexAttribArray(0));
-
-    // // ===== ATTRIBUTE 1 : COLOR =====
-    // GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                              (void*)(3 * sizeof(float))));
-    // GLCall(glEnableVertexAttribArray(1));
-
-    // // ===== ATTRIBUTE 2 : TEXCOORD =====
-    // GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-    //                              (void*)(6 * sizeof(float))));
-    // GLCall(glEnableVertexAttribArray(2));
     unsigned int offset = 0;
     for (unsigned int i = 0; i < elements.size(); i++) {
         const auto& element = elements[i];

@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "Renderer.h"
+#include "VertexBufferLayout.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
@@ -33,7 +34,7 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    GLCall(glfwSwapInterval(1));
+    GLCall(glfwSwapInterval(10));
 
     if (glewInit() != GLEW_OK) {
         std::cout << "Init Glew Failed\n";
@@ -81,15 +82,13 @@ int main() {
     float lastFrame  = 0.0f;
     float blinkSpeed = 1.5f;  // Adjust this to change speed
 
+    Renderer renderer;
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         float deltaTime    = currentFrame - lastFrame;
         lastFrame          = currentFrame;
-        GLCall(glClear(GL_COLOR_BUFFER_BIT));
-        VAO.Bind();
-
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-
+        renderer.Clear();
+        renderer.Draw(VAO, EBO, shader);
         if (r > 1.0f)
             increase = -0.01f;
         else if (r < 0.01f)
