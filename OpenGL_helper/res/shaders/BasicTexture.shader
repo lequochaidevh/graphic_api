@@ -31,6 +31,6 @@ out vec4 colorNoUsed;
 void main()
 {
     vec4 texColor = texture(u_Texture, v_TexCoord);
-    colorNoUsed = texColor * u_Color;
-    color = vec4(1.0);
+    color = texColor * u_Color;
+    colorNoUsed = vec4(1.0);
 }

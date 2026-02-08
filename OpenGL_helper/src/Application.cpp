@@ -55,7 +55,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(960, 540, "LearnOpenGL", NULL, NULL);
     if (!window) {
         std::cout << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -73,8 +73,9 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    glm::mat4 proj =
-        glm::ortho(-2.0, 2.0, -1.5, 1.5, -1.0, 1.0);  // calib width:height 4:3
+    glm::mat4 proj =                            // window sreen size
+        glm::ortho(0.0f, 960.0f, 0.0f, 540.0f,  //
+                   -1.0f, 1.0f);                // calib width:height 4:3
 
     Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
@@ -87,11 +88,11 @@ int main() {
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
-        0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-        0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
-    };
+        500.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
+        500.0f, 500.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        100.0f, 500.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+        100.0f, 100.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+    };  // position not nomallize // real world position
 
     unsigned int indices[] = {0, 1, 3, 1, 2, 3};
 
