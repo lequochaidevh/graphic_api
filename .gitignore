@@ -9,7 +9,6 @@ vendor_build/
 *.includes
 *.creator.user
 tmp/
-test*
 private_files/
 coc.vim
 reference_nopub

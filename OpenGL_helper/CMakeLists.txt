@@ -60,6 +60,7 @@ endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${VENDOR_ROOT}/glfw/include"
     "${VENDOR_ROOT}/x86_64_u20/glad/include"
+    "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_SOURCE_DIR}/src/vendor"
 )
 

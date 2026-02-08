@@ -24,29 +24,10 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw_gl3.h"
 
-#include <nvml.h>
+#include "tests/TestClearColor.h"
+
+#include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
-
-void printGPUStats() {
-    nvmlInit();  // Initialize NVML
-
-    nvmlDevice_t device;
-    // Get handle for the first GPU (index 0)
-    nvmlDeviceGetHandleByIndex(0, &device);
-
-    // 1. Get Temperature
-    unsigned int temp;
-    nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temp);
-
-    // 2. Get Utilization (% GPU Used)
-    nvmlUtilization_t utilization;
-    nvmlDeviceGetUtilizationRates(device, &utilization);
-
-    std::cout << "GPU Temp: " << temp << " C" << std::endl;
-    std::cout << "GPU Usage: " << utilization.gpu << " %" << std::endl;
-
-    nvmlShutdown();  // Clean up
-}
 
 int main() {
     if (!glfwInit()) {
@@ -67,12 +48,7 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    GLCall(glfwSwapInterval(500));
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui_ImplGlfwGL3_Init(window, true);
-    ImGui::StyleColorsDark();
+    GLCall(glfwSwapInterval(1));
 
     if (glewInit() != GLEW_OK) {
         std::cout << "Init Glew Failed\n";
@@ -81,121 +57,30 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    glm::mat4 proj =                            // window sreen size
-        glm::ortho(0.0f, 960.0f, 0.0f, 540.0f,  //
-                   -1.0f, 1.0f);                // calib width:height 4:3
-
     Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
-    shader.SetUniform4f("u_Color", 0.0f, 0.3f, 0.8f, 1.0f);
 
-    Texture texture("res/textures/C_nobgr.png");
-    texture.Bind();                       // slot = 0 default
-    shader.SetUniform1i("u_Texture", 0);  // slot = 0
+    Renderer renderer;
 
-    float vertices[] = {
-        // position(3)      // color(3)     // texCoord(2)
-        50.0f,  50.0f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-        50.0f,  -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        -50.0f, -50.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        -50.0f, 50.0f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
-    };  // position not nomallize // real world position
+    // IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplGlfwGL3_Init(window, true);
+    ImGui::StyleColorsDark();
 
-    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
+    test::TestClearColor testClearColor;
 
-    GLCall(glEnable(GL_BLEND));
-    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-    VertexBuffer VBO(vertices, sizeof(vertices));
-
-    IndexBuffer EBO(indices,
-                    sizeof(indices) / sizeof(unsigned int));  // 6 elements
-
-    VertexArray        VAO;
-    VertexBufferLayout layout;
-    layout.Push<float>(3);  // POSITION
-    layout.Push<float>(3);  // COLOR
-    layout.Push<float>(2);  // TEXCOORD
-    VAO.AddBuffer(VBO, layout);
-
-    // Need Init EBO affter VAO
-    EBO.Bind();  // safety CRITICALLL!!! 4. Bind EBO while VAO is still bound!
-
-    // Now it is safe to unbind (opt)
-    VAO.Unbind();
-    VBO.Unbind();
-    EBO.Unbind();
-
-    float r        = 0.0;
-    float increase = 0.05;
-
-    float lastFrame  = 0.0f;
-    float blinkSpeed = 1.5f;  // Adjust this to change speed
-
-    static float colorValue = 0;
-    Renderer     renderer;
-
-    bool   show_demo_window    = true;
-    bool   show_another_window = false;
-    ImVec4 clear_color         = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    glm::vec3 translationA(50.0f, 50.0f, 0.0f);
-    glm::vec3 translationB(200.0f, 50.0f, 0.0f);
     while (!glfwWindowShouldClose(window)) {
-        float currentFrame = glfwGetTime();
-        float deltaTime    = currentFrame - lastFrame;
-        lastFrame          = currentFrame;
-        renderer.Clear(colorValue);
-
-        glm::mat4 view =  // camera
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
-            glm::mat4 mvp   = proj * view * model;
-            shader.Bind();
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(VAO, EBO, shader);
-        }
-
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
-            glm::mat4 mvp   = proj * view * model;
-            shader.Bind();
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(VAO, EBO, shader);
-        }
+        renderer.Clear();
+        testClearColor.OnUpdate(0.0f);
+        testClearColor.OnRender();
 
         ImGui_ImplGlfwGL3_NewFrame();
-
-        if (r > 1.0f)
-            increase = -0.01f;
-        else if (r < 0.01f)
-            increase = 0.01f;
-
-        r += blinkSpeed * deltaTime;
-        colorValue = (std::sin(r) + 1.0f) / 2.0f;  // Smooth pulse 0.0 to 1.0
-
-        shader.Bind();
-        shader.SetUniform4f("u_Color", 0.3f, 0.8f, 1.0f - colorValue, 1.0f);
-
-        // 1. Show a simple window.
-        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets
-        // automatically appears in a window called "Debug".
-        {
-            ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 960.0f);
-            ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 960.0f);
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                        1000.0f / ImGui::GetIO().Framerate,
-                        ImGui::GetIO().Framerate);
-        }
-
+        testClearColor.OnImGuiRender();
         ImGui::Render();
         ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        printGPUStats();
         std::this_thread::sleep_for(std::chrono::milliseconds(30));  // 15fps
     }
 
