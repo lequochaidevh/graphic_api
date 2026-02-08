@@ -77,10 +77,20 @@ int main() {
         glm::ortho(0.0f, 960.0f, 0.0f, 540.0f,  //
                    -1.0f, 1.0f);                // calib width:height 4:3
 
+    glm::mat4 view = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(500.0f, 0.0f,
+                  0.0f));  // move camera to left object will move right
+
+    glm::mat4 model = glm::translate(
+        glm::mat4(1.0f), glm::vec3(-300.0f, 0.0f, 0.0f));  // move model left
+
+    glm::mat4 mvp = proj * view * model;  // model view projection
+
     Shader shader("res/shaders/BasicTexture.shader");
     shader.Bind();
     shader.SetUniform4f("u_Color", 0.0f, 0.3f, 0.8f, 1.0f);
-    shader.SetUniformMat4f("u_MVP", proj);
+    shader.SetUniformMat4f("u_MVP", mvp);
 
     Texture texture("res/textures/C_nobgr.png");
     texture.Bind();                       // slot = 0 default
