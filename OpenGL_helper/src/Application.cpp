@@ -95,10 +95,10 @@ int main() {
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
-        500.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-        500.0f, 500.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        100.0f, 500.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        100.0f, 100.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+        50.0f,  50.0f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
+        50.0f,  -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        -50.0f, -50.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+        -50.0f, 50.0f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
     };  // position not nomallize // real world position
 
     unsigned int indices[] = {0, 1, 3, 1, 2, 3};
@@ -139,28 +139,35 @@ int main() {
     bool   show_another_window = false;
     ImVec4 clear_color         = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    glm::vec3 translation(-300.0f, 0.0f, 0.0f);
+    glm::vec3 translationA(50.0f, 50.0f, 0.0f);
+    glm::vec3 translationB(200.0f, 50.0f, 0.0f);
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         float deltaTime    = currentFrame - lastFrame;
         lastFrame          = currentFrame;
         renderer.Clear(colorValue);
 
-        glm::mat4 view = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(500.0f, 0.0f,
-                      0.0f));  // move camera to left object will move right
+        glm::mat4 view =  // camera
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-        glm::mat4 model =
-            glm::translate(glm::mat4(1.0f), translation);  // move model left
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+            glm::mat4 mvp   = proj * view * model;
+            shader.Bind();
+            shader.SetUniformMat4f("u_MVP", mvp);
+            renderer.Draw(VAO, EBO, shader);
+        }
 
-        glm::mat4 mvp = proj * view * model;  // model view projection
-
-        shader.SetUniformMat4f("u_MVP", mvp);
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+            glm::mat4 mvp   = proj * view * model;
+            shader.Bind();
+            shader.SetUniformMat4f("u_MVP", mvp);
+            renderer.Draw(VAO, EBO, shader);
+        }
 
         ImGui_ImplGlfwGL3_NewFrame();
 
-        renderer.Draw(VAO, EBO, shader);
         if (r > 1.0f)
             increase = -0.01f;
         else if (r < 0.01f)
@@ -176,8 +183,8 @@ int main() {
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets
         // automatically appears in a window called "Debug".
         {
-            ImGui::SliderFloat3("Translation", &translation.x, -300.0f, 300.0f);
-
+            ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 960.0f);
+            ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 960.0f);
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate,
                         ImGui::GetIO().Framerate);
@@ -189,7 +196,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
         printGPUStats();
-        std::this_thread::sleep_for(std::chrono::milliseconds(66));  // 15fps
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));  // 15fps
     }
 
     // Close OpenGL window and terminate GLFW
