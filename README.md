@@ -13,9 +13,9 @@ Intel® Core™ i7-8750H CPU @ 2.20GHz × 12
 NVIDIA Corporation GP107M [GeForce GTX 1050 Mobile]
 
 ---
-### OpenGL: 
+### OpenGL: build helper_v0.0.1 with
 + glfw3 (version 3.3.0)
-+ glew(old), or glad
++ glew (version 2.1.0-4 --- old-method), or glad
 + glm (version 1.0.3)
 + imgui (version 1.61)
 
