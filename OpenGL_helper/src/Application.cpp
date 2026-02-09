@@ -39,7 +39,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(960, 540, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(960, 540, "LearnOpenGL", NULL, NULL);
     if (!window) {
         std::cout << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -67,15 +67,29 @@ int main() {
     ImGui_ImplGlfwGL3_Init(window, true);
     ImGui::StyleColorsDark();
 
-    test::TestClearColor testClearColor;
+    test::Test*     currentTestPtr = nullptr;
+    test::TestMenu* testMenuPtr    = new test::TestMenu(currentTestPtr);
+    currentTestPtr                 = testMenuPtr;  // init
+    testMenuPtr->RegisterTest<test::TestClearColor>("Clear Color");
 
     while (!glfwWindowShouldClose(window)) {
         renderer.Clear();
-        testClearColor.OnUpdate(0.0f);
-        testClearColor.OnRender();
 
         ImGui_ImplGlfwGL3_NewFrame();
-        testClearColor.OnImGuiRender();
+
+        if (currentTestPtr) {
+            currentTestPtr->OnUpdate(0.0f);
+            currentTestPtr->OnRender();
+            ImGui::Begin("Test");
+            if (currentTestPtr != testMenuPtr && ImGui::Button("<-")) {
+                std::cout << "Delete Constructor currentTest" << std::endl;
+                delete currentTestPtr;
+                currentTestPtr = testMenuPtr;
+            }
+            currentTestPtr->OnImGuiRender();
+            ImGui::End();
+        }
+
         ImGui::Render();
         ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
