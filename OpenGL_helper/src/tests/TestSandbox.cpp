@@ -15,13 +15,18 @@ TestSandbox::TestSandbox()
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
-        50.0f,  50.0f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-        50.0f,  -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        50.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,    // top right
+        50.0f, -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // bottom right
         -50.0f, -50.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        -50.0f, 50.0f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+        -50.0f, 50.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,   // top left
+                                                             //
+        200.0f, 200.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
+        200.0f, 100.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        100.0f, 100.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+        100.0f, 200.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
     };  // position not nomallize // real world position
 
-    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
+    unsigned int indices[] = {0, 1, 3, 1, 2, 3, 4, 5, 7, 5, 6, 7};
 
     // 1. Init vertex buffer object
     m_VBO = std::make_unique<VertexBuffer>(vertices, sizeof(vertices));
@@ -41,7 +46,7 @@ TestSandbox::TestSandbox()
     m_VAO->AddBuffer(*m_VBO, layout);
 
     m_EBO = std::make_unique<IndexBuffer>(
-        indices, sizeof(indices) / sizeof(unsigned int));  // 6 elements
+        indices, sizeof(indices) / sizeof(unsigned int));  // 12 elements
 
     // 4. Build Texture
     m_Shader->Bind();
@@ -64,25 +69,15 @@ void TestSandbox::OnRender() {
     {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), m_TranslationA);
         glm::mat4 mvp   = m_Proj * m_View * model;
-        m_Shader->Bind();
         m_Shader->SetUniformMat4f("u_MVP", mvp);
-        renderer.Draw(*m_VAO, *m_EBO, *m_Shader);
     }
 
-    {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), m_TranslationB);
-        glm::mat4 mvp   = m_Proj * m_View * model;
-        m_Shader->Bind();
-        m_Shader->SetUniformMat4f("u_MVP", mvp);
-        renderer.Draw(*m_VAO, *m_EBO, *m_Shader);
-    }
+    renderer.Draw(*m_VAO, *m_EBO, *m_Shader);
 }
 
 void TestSandbox::OnImGuiRender() {
     ImGui::SliderFloat("Translation Ax", &m_TranslationA.x, 0.0f, 960.0f);
     ImGui::SliderFloat("Translation Ay", &m_TranslationA.y, 0.0f, 540.0f);
-    ImGui::SliderFloat("Translation Bx", &m_TranslationB.x, 0.0f, 960.0f);
-    ImGui::SliderFloat("Translation By", &m_TranslationB.y, 0.0f, 540.0f);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 }
