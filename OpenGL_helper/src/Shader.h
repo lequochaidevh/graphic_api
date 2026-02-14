@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <memory>
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
@@ -51,4 +52,15 @@ class Shader {
                                bool errHandlingEnable);
     unsigned int CreateShader(const std::string &vertexShader,
                               const std::string &fragmentShader);
+
+ public:
+    std::string ReadFileAsString(const std::string &filepath);
+    static std::unique_ptr<Shader> FromGLSLTextFiles(
+        const std::string &vertexShaderPath,
+        const std::string &fragmentShaderPath);
+
+ private:
+    Shader() = default;
+    void LoadFromGLSLTextFiles(const std::string &vertexShaderPath,
+                               const std::string &fragmentShaderPath);
 };

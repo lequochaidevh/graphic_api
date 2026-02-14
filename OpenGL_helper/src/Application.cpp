@@ -26,6 +26,7 @@
 
 #include "tests/TestClearColor.h"
 #include "tests/TestTexture2D.h"
+#include "tests/TestSandbox.h"
 
 #include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
@@ -70,6 +71,7 @@ int main() {
     currentTestPtr                 = testMenuPtr;  // init
     testMenuPtr->RegisterTest<test::TestClearColor>("Clear Color");
     testMenuPtr->RegisterTest<test::TestTexture2D>("2D Texture");
+    testMenuPtr->RegisterTest<test::TestSandbox>("Sandbox base");
 
     while (!glfwWindowShouldClose(window)) {
         renderer.Clear();

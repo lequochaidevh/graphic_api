@@ -1,9 +1,9 @@
-#include "TestTexture2D.h"
+#include "TestSandbox.h"
 
 #include "VertexBufferLayout.h"
 
 namespace test {
-TestTexture2D::TestTexture2D()
+TestSandbox::TestSandbox()
     : m_Proj(glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f)),
       m_View(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))),
       m_TranslationA(50.0f, 50.0f, 0.0f),
@@ -27,7 +27,8 @@ TestTexture2D::TestTexture2D()
     m_VBO = std::make_unique<VertexBuffer>(vertices, sizeof(vertices));
 
     // 2. Init path shader program
-    m_Shader = std::make_unique<Shader>("res/shaders/BasicTexture.shader");
+    m_Shader = Shader::FromGLSLTextFiles("res/shaders/test.vert.glsl",
+                                         "res/shaders/test.frag.glsl");
 
     // 3. Build Vertex Array
     m_VAO = std::make_unique<VertexArray>();
@@ -49,11 +50,11 @@ TestTexture2D::TestTexture2D()
     m_Shader->SetUniform1i("u_Texture", 0);  // slot = 0
 }
 
-TestTexture2D::~TestTexture2D() {}
+TestSandbox::~TestSandbox() {}
 
-void TestTexture2D::OnUpdate(float deltaTime) {}
+void TestSandbox::OnUpdate(float deltaTime) {}
 
-void TestTexture2D::OnRender() {
+void TestSandbox::OnRender() {
     GLCall(glClearColor(0, 0, 0, 1));
     GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
@@ -77,7 +78,7 @@ void TestTexture2D::OnRender() {
     }
 }
 
-void TestTexture2D::OnImGuiRender() {
+void TestSandbox::OnImGuiRender() {
     ImGui::SliderFloat("Translation Ax", &m_TranslationA.x, 0.0f, 960.0f);
     ImGui::SliderFloat("Translation Ay", &m_TranslationA.y, 0.0f, 540.0f);
     ImGui::SliderFloat("Translation Bx", &m_TranslationB.x, 0.0f, 960.0f);
