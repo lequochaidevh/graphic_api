@@ -24,27 +24,64 @@ void Shader::Bind() const { GLCall(glUseProgram(m_RendererID)); }
 
 void Shader::Unbind() const { GLCall(glUseProgram(0)); }
 
+void Shader::SetUniform1f(const std::string &name, float v0) {
+    GLCall(glUniform1f(GetUniformLocation(name), v0));
+}
+
+void Shader::SetUniform2f(const std::string &name, float v0, float v1) {
+    GLCall(glUniform2f(GetUniformLocation(name), v0, v1));
+}
+
+void Shader::SetUniform3f(const std::string &name, float v0, float v1,
+                          float v2) {
+    GLCall(glUniform3f(GetUniformLocation(name), v0, v1, v2));
+}
+
 void Shader::SetUniform4f(const std::string &name, float v0, float v1, float v2,
                           float v3) {
     GLCall(glUniform4f(GetUniformLocation(name), v0, v1, v2, v3));
 }
 
+void Shader::SetUniform1i(const std::string &name, int v0) {
+    GLCall(glUniform1i(GetUniformLocation(name), v0));
+}
+
+void Shader::SetUniform2i(const std::string &name, int v0, int v1) {
+    GLCall(glUniform2i(GetUniformLocation(name), v0, v1));
+}
+
+void Shader::SetUniform3i(const std::string &name, int v0, int v1, int v2) {
+    GLCall(glUniform3i(GetUniformLocation(name), v0, v1, v2));
+}
+
+void Shader::SetUniform4i(const std::string &name, int v0, int v1, int v2,
+                          int v3) {
+    GLCall(glUniform4i(GetUniformLocation(name), v0, v1, v2, v3));
+}
+
+void Shader::SetUniformVec2f(const std::string &name, const glm::vec2 &v) {
+    GLCall(glUniform2f(GetUniformLocation(name), v.x, v.y));
+}
+
+void Shader::SetUniformVec3f(const std::string &name, const glm::vec3 &v) {
+    GLCall(glUniform3f(GetUniformLocation(name), v.x, v.y, v.z));
+}
+
+void Shader::SetUniformVec4f(const std::string &name, const glm::vec4 &v) {
+    GLCall(glUniform4f(GetUniformLocation(name), v.x, v.y, v.z, v.w));
+}
+
+void Shader::SetUniformMat3f(const std::string &name, const glm::mat3 &matrix) {
+    GLCall(glUniformMatrix3fv(GetUniformLocation(name), 1, GL_FALSE,
+                              &matrix[0][0]));
+}
+
 void Shader::SetUniformMat4f(const std::string &name, const glm::mat4 &matrix) {
     GLCall(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE,
                               &matrix[0][0]));
-    //   void (*)(GLint location, GLsizei count, GLboolean transpose, const
-    //   GLfloat *value)
 }
 
-void Shader::SetUniform1f(const std::string &name, float value) {
-    GLCall(glUniform1f(GetUniformLocation(name), value));
-}
-
-void Shader::SetUniform1i(const std::string &name, int value) {
-    GLCall(glUniform1i(GetUniformLocation(name), value));
-}
-
-int Shader::GetUniformLocation(const std::string &name) {
+GLint Shader::GetUniformLocation(const std::string &name) const {
     Bind();  // safety
 
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
