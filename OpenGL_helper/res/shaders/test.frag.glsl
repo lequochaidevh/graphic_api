@@ -3,15 +3,15 @@
 layout(location = 0) out vec4 color;
 
 in vec2 v_TexCoord;
-
+in vec3 aColorVert;
 uniform vec4 u_Color;
 uniform sampler2D u_Texture;
 
-out vec4 colorNoUsed;
+out vec4 frag_uniformNoUsed;
 
 void main()
 {
     vec4 texColor = texture(u_Texture, v_TexCoord);
-    color = texColor * u_Color;
-    colorNoUsed = vec4(1.0);
+    color = texColor * vec4(aColorVert, 1.0);
+    frag_uniformNoUsed = texColor * u_Color;;
 }

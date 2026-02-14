@@ -15,15 +15,15 @@ TestSandbox::TestSandbox()
 
     float vertices[] = {
         // position(3)      // color(3)     // texCoord(2)
-        50.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,    // top right
-        50.0f, -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // bottom right
-        -50.0f, -50.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        -50.0f, 50.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,   // top left
-                                                             //
-        200.0f, 200.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-        200.0f, 100.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
-        100.0f, 100.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-        100.0f, 200.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+        50.0f, 50.0f, 0.0f, 0.18f, 0.6f, 0.96f, 1.0f, 1.0f,    // top right
+        50.0f, -50.0f, 0.0f, 0.18f, 0.6f, 0.96f, 1.0f, 0.0f,   // bottom right
+        -50.0f, -50.0f, 0.0f, 0.18f, 0.6f, 0.96f, 0.0f, 0.0f,  // bottom left
+        -50.0f, 50.0f, 0.0f, 0.18f, 0.6f, 0.96f, 0.0f, 1.0f,   // top left
+                                                               //
+        200.0f, 200.0f, 0.0f, 1.0f, 0.88f, 0.66f, 1.0f, 1.0f,  // top right
+        200.0f, 100.0f, 0.0f, 1.0f, 0.88f, 0.66f, 1.0f, 0.0f,  // bottom right
+        100.0f, 100.0f, 0.0f, 1.0f, 0.88f, 0.66f, 0.0f, 0.0f,  // bottom left
+        100.0f, 200.0f, 0.0f, 1.0f, 0.88f, 0.66f, 0.0f, 1.0f   // top left
     };  // position not nomallize // real world position
 
     unsigned int indices[] = {0, 1, 3, 1, 2, 3, 4, 5, 7, 5, 6, 7};
