@@ -1,0 +1,93 @@
+#include "TestTexture2D.h"
+
+#include "VertexBufferLayout.h"
+
+namespace test {
+TestTexture2D::TestTexture2D()
+    : m_Proj(glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f)),
+      m_View(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))),
+      m_TranslationA(50.0f, 50.0f, 0.0f),
+      m_TranslationB(200.0f, 50.0f, 0.0f)  //
+{
+    // 0. Set up define and local variable
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    float vertices[] = {
+        // position(3)      // color(3)     // texCoord(2)
+        50.0f,  50.0f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
+        50.0f,  -50.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        -50.0f, -50.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+        -50.0f, 50.0f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
+    };  // position not nomallize // real world position
+
+    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
+
+    // 1. Init vertex buffer object
+    m_VBO = std::make_unique<VertexBuffer>(vertices, sizeof(vertices));
+
+    // 2. Init path shader program
+    m_Shader = std::make_unique<Shader>("res/shaders/BasicTexture.shader");
+
+    // 3. Build Vertex Array
+    m_VAO = std::make_unique<VertexArray>();
+    // local
+    VertexBufferLayout layout;
+    layout.Push<float>(3);  // POSITION
+    layout.Push<float>(3);  // COLOR
+    layout.Push<float>(2);  // TEXCOORD
+    // push to instance
+    m_VAO->AddBuffer(*m_VBO, layout);
+
+    m_EBO = std::make_unique<IndexBuffer>(
+        indices, sizeof(indices) / sizeof(unsigned int));  // 6 elements
+
+    // 4. Build Texture
+    m_Shader->Bind();
+    m_Shader->SetUniform4f("u_Color", 0.0f, 0.3f, 0.8f, 1.0f);
+    m_Texture = std::make_unique<Texture>("res/textures/C_nobgr.png");
+    m_Shader->SetUniform1i("u_Texture", 0);  // slot = 0
+
+    // 5. Bind m_EBO while m_VAO is still bound !
+    // safety CRITICAL!
+    // m_EBO->Bind();
+}
+
+TestTexture2D::~TestTexture2D() {}
+
+void TestTexture2D::OnUpdate(float deltaTime) {}
+
+void TestTexture2D::OnRender() {
+    GLCall(glClearColor(0, 0, 0, 1));
+    GLCall(glClear(GL_COLOR_BUFFER_BIT));
+
+    Renderer renderer;
+    m_Texture->Bind();  // slot = 0 default
+
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), m_TranslationA);
+        glm::mat4 mvp   = m_Proj * m_View * model;
+        m_Shader->Bind();
+        m_Shader->SetUniformMat4f("u_MVP", mvp);
+        renderer.Draw(*m_VAO, *m_EBO, *m_Shader);
+    }
+
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), m_TranslationB);
+        glm::mat4 mvp   = m_Proj * m_View * model;
+        m_Shader->Bind();
+        m_Shader->SetUniformMat4f("u_MVP", mvp);
+        renderer.Draw(*m_VAO, *m_EBO, *m_Shader);
+    }
+}
+
+void TestTexture2D::OnImGuiRender() {
+    ImGui::SliderFloat("Translation Ax", &m_TranslationA.x, 0.0f, 960.0f);
+    ImGui::SliderFloat("Translation Ay", &m_TranslationA.y, 0.0f, 540.0f);
+    ImGui::SliderFloat("Translation Bx", &m_TranslationB.x, 0.0f, 960.0f);
+    ImGui::SliderFloat("Translation By", &m_TranslationB.y, 0.0f, 540.0f);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+}
+
+};  // namespace test

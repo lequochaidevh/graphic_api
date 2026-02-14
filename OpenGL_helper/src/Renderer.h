@@ -24,11 +24,11 @@
 #define GLCall(x)   \
     GLClearError(); \
     x;              \
-    ASSERT_GL(GLLogCall())
+    ASSERT_GL(GLLogCall(#x, __FILE__, __LINE__))
 
 void GLClearError();
 
-bool GLLogCall();
+bool GLLogCall(const char* function, const char* file, int line);
 
 class Renderer {
  private:

@@ -25,6 +25,7 @@
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
 
 #include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
@@ -57,9 +58,6 @@ int main() {
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    Shader shader("res/shaders/BasicTexture.shader");
-    shader.Bind();
-
     Renderer renderer;
 
     // IMGUI_CHECKVERSION();
@@ -71,6 +69,7 @@ int main() {
     test::TestMenu* testMenuPtr    = new test::TestMenu(currentTestPtr);
     currentTestPtr                 = testMenuPtr;  // init
     testMenuPtr->RegisterTest<test::TestClearColor>("Clear Color");
+    testMenuPtr->RegisterTest<test::TestTexture2D>("2D Texture");
 
     while (!glfwWindowShouldClose(window)) {
         renderer.Clear();
@@ -81,7 +80,7 @@ int main() {
             currentTestPtr->OnUpdate(0.0f);
             currentTestPtr->OnRender();
             ImGui::Begin("Test");
-            if (currentTestPtr != testMenuPtr && ImGui::Button("<-")) {
+            if (currentTestPtr != testMenuPtr && ImGui::Button("[<=]")) {
                 std::cout << "Delete Constructor currentTest" << std::endl;
                 delete currentTestPtr;
                 currentTestPtr = testMenuPtr;
