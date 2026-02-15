@@ -1,5 +1,7 @@
 #pragma once
-
+/**  description:
+ * using once draw but can handle change color with texture.
+ */
 #include "Test.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
@@ -14,10 +16,10 @@
 #include "imgui/imgui.h"
 
 namespace test {
-class TestSandbox : public Test {
+class TestTextureRainbow : public Test {
  public:
-    TestSandbox();
-    ~TestSandbox();
+    TestTextureRainbow();
+    ~TestTextureRainbow();
 
     void OnUpdate(float deltaTime) override;
     void OnRender() override;
@@ -32,5 +34,6 @@ class TestSandbox : public Test {
 
     glm::vec3 m_Translation;
     glm::mat4 m_Proj, m_View;
+    glm::vec3 m_ChangeColor;
 };
 }  // namespace test
