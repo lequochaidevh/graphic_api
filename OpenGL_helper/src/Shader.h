@@ -23,8 +23,9 @@ class Shader {
     Shader(const std::string &filepath);
     ~Shader();
 
-    void Bind() const;
-    void Unbind() const;
+    inline unsigned int GetRendererID() const { return m_RendererID; }
+    void                Bind() const;
+    void                Unbind() const;
 
     void SetUniform1f(const std::string &name, float v0);
     void SetUniform2f(const std::string &name, float v0, float v1);
@@ -36,6 +37,15 @@ class Shader {
     void SetUniform2i(const std::string &name, int v0, int v1);
     void SetUniform3i(const std::string &name, int v0, int v1, int v2);
     void SetUniform4i(const std::string &name, int v0, int v1, int v2, int v3);
+
+    void SetUniform1iv(const std::string &name, GLsizei count,
+                       const int *value);
+    void SetUniform2iv(const std::string &name, GLsizei count,
+                       const int *value);
+    void SetUniform3iv(const std::string &name, GLsizei count,
+                       const int *value);
+    void SetUniform4iv(const std::string &name, GLsizei count,
+                       const int *value);
 
     void SetUniformVec2f(const std::string &name, const glm::vec2 &v);
     void SetUniformVec3f(const std::string &name, const glm::vec3 &v);

@@ -59,6 +59,26 @@ void Shader::SetUniform4i(const std::string &name, int v0, int v1, int v2,
     GLCall(glUniform4i(GetUniformLocation(name), v0, v1, v2, v3));
 }
 
+void Shader::SetUniform1iv(const std::string &name, GLsizei count,
+                           const int *value) {
+    GLCall(glUniform1iv(GetUniformLocation(name), count, value));
+}
+
+void Shader::SetUniform2iv(const std::string &name, GLsizei count,
+                           const int *value) {
+    GLCall(glUniform2iv(GetUniformLocation(name), count, value));
+}
+
+void Shader::SetUniform3iv(const std::string &name, GLsizei count,
+                           const int *value) {
+    GLCall(glUniform3iv(GetUniformLocation(name), count, value));
+}
+
+void Shader::SetUniform4iv(const std::string &name, GLsizei count,
+                           const int *value) {
+    GLCall(glUniform4iv(GetUniformLocation(name), count, value));
+}
+
 void Shader::SetUniformVec2f(const std::string &name, const glm::vec2 &v) {
     GLCall(glUniform2f(GetUniformLocation(name), v.x, v.y));
 }
