@@ -7,7 +7,6 @@
 #include <mutex>
 #include <chrono>
 #include <fmt/color.h>
-#include <string_view>
 
 inline const char* short_file_name(const char* path) {
     const char* file = std::strrchr(path, '/');
@@ -17,7 +16,7 @@ inline const char* short_file_name(const char* path) {
 enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, OFF };
 
 #ifndef LOG_ACTIVE_LEVEL
-#define LOG_ACTIVE_LEVEL LogLevel::DEBUG
+#define LOG_ACTIVE_LEVEL LogLevel::TRACE
 #endif
 
 constexpr bool is_enabled(LogLevel level) {
@@ -58,7 +57,7 @@ class Logger {
         std::string msg = fmt::format(fmt_str, std::forward<Args>(args)...);
 
         std::string final_msg =
-            fmt::format("[{}] [{}] {}:{} {}() | {}\n", time,
+            fmt::format("[{}] [{}] {}:{} {}() : {}", time,
                         level_to_string(msg_level), file, line, func, msg);
 
         std::lock_guard<std::mutex> lock(mutex_);
@@ -74,41 +73,33 @@ class Logger {
     void print_colored(LogLevel level, const std::string& msg) {
         switch (level) {
             case LogLevel::TRACE:
-                fmt::print(fmt::fg(fmt::color::gray), "{}", msg);
+                fmt::print(fmt::fg(fmt::color::gray), "{}\n", msg);
                 fmt::print("\033[0m");
                 break;
             case LogLevel::DEBUG:
-                fmt::print(fmt::fg(fmt::color::blue_violet), "{}", msg);
+                fmt::print(fmt::fg(fmt::color::cyan), "{}\n", msg);
                 fmt::print("\033[0m");
                 break;
 
             case LogLevel::INFO:
-                fmt::print(fmt::fg(fmt::color::green), "{}", msg);
+                fmt::print(fmt::fg(fmt::color::lawn_green), "{}\n", msg);
                 fmt::print("\033[0m");
                 break;
 
             case LogLevel::WARN:
-                fmt::print(fmt::fg(fmt::color::yellow), "{}", msg);
+                fmt::print(fmt::fg(fmt::color::yellow), "{}\n", msg);
                 fmt::print("\033[0m");
                 break;
 
             case LogLevel::ERROR:
-                fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "{}",
-                           msg);
+                fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold,
+                           "{}\n", msg);
                 fmt::print("\033[0m");
                 break;
             case LogLevel::CRITICAL:
-                // Fix bug with background exist color
-                // not need \n in msg
-                std::string_view view = msg;
-
-                if (!view.empty() && view.back() == '\n') {
-                    view.remove_suffix(1);
-                }
-
                 fmt::print(fmt::fg(fmt::color::white) |
                                fmt::bg(fmt::color::red) | fmt::emphasis::bold,
-                           "{}", view);
+                           "{}", msg);
                 fmt::print("\033[0m");
                 fmt::print("{}", "\n");
                 break;
@@ -139,40 +130,23 @@ class Logger {
     std::mutex    mutex_;
 };
 
-#define LOG_IMPL(level, ...)                                                  \
-    do {                                                                      \
-        if constexpr (is_enabled(level)) {                                    \
-            Logger::log(level, short_file_name(__FILE__), __LINE__, __func__, \
-                        __VA_ARGS__);                                         \
-        }                                                                     \
+#define LOG_IMPL(level, fmt, ...)                                              \
+    do {                                                                       \
+        if constexpr (is_enabled(level)) {                                     \
+            Logger::instance().log(level, short_file_name(__FILE__), __LINE__, \
+                                   __func__, fmt, ##__VA_ARGS__);              \
+        }                                                                      \
     } while (0)
 
-#define LOG_TRACE(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::TRACE, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define LOG_INFO(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::INFO, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define LOG_DEBUG(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::DEBUG, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define LOG_WARN(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::WARN, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define LOG_ERROR(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::ERROR, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define LOG_CRITICAL(fmt, ...)                                            \
-    Logger::instance().log(LogLevel::CRITICAL, short_file_name(__FILE__), \
-                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOG_TRACE(fmt, ...)    LOG_IMPL(LogLevel::TRACE, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...)    LOG_IMPL(LogLevel::DEBUG, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)     LOG_IMPL(LogLevel::INFO, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)     LOG_IMPL(LogLevel::WARN, fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...)    LOG_IMPL(LogLevel::ERROR, fmt, ##__VA_ARGS__)
+#define LOG_CRITICAL(fmt, ...) LOG_IMPL(LogLevel::CRITICAL, fmt, ##__VA_ARGS__)
 
 // TODO:
-// Compile-time disable DEBUG
+// ok: ver1: Compile-time disable DEBUG
 // Zero-cost if level disabled
 // Colorized output
 // Async logging
