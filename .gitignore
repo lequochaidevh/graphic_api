@@ -13,3 +13,5 @@ private_files/
 coc.vim
 reference_nopub
 *.bki
+GLReference/
+imgui.ini
