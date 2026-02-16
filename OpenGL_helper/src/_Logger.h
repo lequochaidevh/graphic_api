@@ -1,0 +1,180 @@
+#pragma once
+
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+#include <iostream>
+#include <fstream>
+#include <mutex>
+#include <chrono>
+#include <fmt/color.h>
+#include <string_view>
+
+inline const char* short_file_name(const char* path) {
+    const char* file = std::strrchr(path, '/');
+    return file ? file + 1 : path;
+}
+
+enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, OFF };
+
+#ifndef LOG_ACTIVE_LEVEL
+#define LOG_ACTIVE_LEVEL LogLevel::DEBUG
+#endif
+
+constexpr bool is_enabled(LogLevel level) {
+    return static_cast<int>(level) >= static_cast<int>(LOG_ACTIVE_LEVEL);
+}
+
+class Logger {
+ public:
+    static Logger& instance() {
+        static Logger inst;
+        return inst;
+    }
+
+    void set_level(LogLevel lvl) { level_ = lvl; }
+
+    void set_file(const std::string& filename) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        file_.open(filename, std::ios::app);
+    }
+
+    template <typename... Args>
+    void log(LogLevel msg_level, const char* file, int line, const char* func,
+             const char* fmt_str, Args&&... args) {
+        if (msg_level < level_) return;
+
+        auto        now = std::chrono::system_clock::now();
+        std::time_t t   = std::chrono::system_clock::to_time_t(now);
+
+        std::tm tm_buf;
+        localtime_r(&t, &tm_buf);
+
+        char time_buffer[32];
+        std::strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S",
+                      &tm_buf);
+
+        std::string time = time_buffer;
+
+        std::string msg = fmt::format(fmt_str, std::forward<Args>(args)...);
+
+        std::string final_msg =
+            fmt::format("[{}] [{}] {}:{} {}() | {}\n", time,
+                        level_to_string(msg_level), file, line, func, msg);
+
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        print_colored(msg_level, final_msg);
+
+        if (file_.is_open()) file_ << final_msg;
+    }
+
+ private:
+    Logger() : level_(LogLevel::TRACE) {}
+
+    void print_colored(LogLevel level, const std::string& msg) {
+        switch (level) {
+            case LogLevel::TRACE:
+                fmt::print(fmt::fg(fmt::color::gray), "{}", msg);
+                fmt::print("\033[0m");
+                break;
+            case LogLevel::DEBUG:
+                fmt::print(fmt::fg(fmt::color::blue_violet), "{}", msg);
+                fmt::print("\033[0m");
+                break;
+
+            case LogLevel::INFO:
+                fmt::print(fmt::fg(fmt::color::green), "{}", msg);
+                fmt::print("\033[0m");
+                break;
+
+            case LogLevel::WARN:
+                fmt::print(fmt::fg(fmt::color::yellow), "{}", msg);
+                fmt::print("\033[0m");
+                break;
+
+            case LogLevel::ERROR:
+                fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "{}",
+                           msg);
+                fmt::print("\033[0m");
+                break;
+            case LogLevel::CRITICAL:
+                // Fix bug with background exist color
+                // not need \n in msg
+                std::string_view view = msg;
+
+                if (!view.empty() && view.back() == '\n') {
+                    view.remove_suffix(1);
+                }
+
+                fmt::print(fmt::fg(fmt::color::white) |
+                               fmt::bg(fmt::color::red) | fmt::emphasis::bold,
+                           "{}", view);
+                fmt::print("\033[0m");
+                fmt::print("{}", "\n");
+                break;
+        }
+    }
+
+    const char* level_to_string(LogLevel lvl) {
+        switch (lvl) {
+            case LogLevel::TRACE:
+                return "TRACE";
+            case LogLevel::DEBUG:
+                return "DEBUG";
+            case LogLevel::INFO:
+                return "INFO";
+            case LogLevel::WARN:
+                return "WARN";
+            case LogLevel::ERROR:
+                return "ERROR";
+            case LogLevel::CRITICAL:
+                return "CRITICAL";
+        }
+        return "";
+    }
+
+ private:
+    LogLevel      level_;
+    std::ofstream file_;
+    std::mutex    mutex_;
+};
+
+#define LOG_IMPL(level, ...)                                                  \
+    do {                                                                      \
+        if constexpr (is_enabled(level)) {                                    \
+            Logger::log(level, short_file_name(__FILE__), __LINE__, __func__, \
+                        __VA_ARGS__);                                         \
+        }                                                                     \
+    } while (0)
+
+#define LOG_TRACE(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::TRACE, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+#define LOG_INFO(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::INFO, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+#define LOG_DEBUG(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::DEBUG, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+#define LOG_WARN(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::WARN, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+#define LOG_ERROR(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::ERROR, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+#define LOG_CRITICAL(fmt, ...)                                            \
+    Logger::instance().log(LogLevel::CRITICAL, short_file_name(__FILE__), \
+                           __LINE__, __func__, fmt, ##__VA_ARGS__)
+
+// TODO:
+// Compile-time disable DEBUG
+// Zero-cost if level disabled
+// Colorized output
+// Async logging
+// Ring buffer realtime safe
+// Lock-free logger

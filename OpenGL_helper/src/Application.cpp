@@ -34,7 +34,17 @@
 #include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
 
+#include "_Logger.h"
+
 int main() {
+    int a = 3, b = 4;
+    LOG_TRACE("ABC {} {}", a, b);
+    LOG_DEBUG("ABC {} {}", a, b);
+    LOG_INFO("ABC {} {}", a, b);
+    LOG_WARN("ABC {} {}", a, b);
+    LOG_ERROR("ABC {} {}", a, b);
+    LOG_CRITICAL("ABC {} {}", a, b);
+
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW\n";
         return -1;

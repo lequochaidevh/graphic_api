@@ -17,11 +17,12 @@ void VertexArray::AddBuffer(const VertexBuffer&       vb,
     unsigned int offset = 0;
     for (unsigned int i = 0; i < elements.size(); i++) {
         const auto& element = elements[i];
-        std::cout << "[DEBUG] Attribute: " << i << " | Count: " << element.count
-                  << " | Type: " << element.type << " | Normalized: "
-                  << (element.normalized ? "TRUE" : "FALSE")
-                  << " | Stride: " << layout.GetStride()
-                  << " | Offset: " << offset << std::endl;
+        // std::cout << "[DEBUG] Attribute: " << i << " | Count: " <<
+        // element.count
+        //           << " | Type: " << element.type << " | Normalized: "
+        //           << (element.normalized ? "TRUE" : "FALSE")
+        //           << " | Stride: " << layout.GetStride()
+        //           << " | Offset: " << offset << std::endl;
         // 1. Set the attribute pointer using the CURRENT offset
         GLCall(glVertexAttribPointer(
             i,                        // Attribute index

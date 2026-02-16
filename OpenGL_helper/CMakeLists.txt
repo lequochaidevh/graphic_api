@@ -45,6 +45,8 @@ add_executable(${PROJECT_NAME}
 
 # --- Link ---
 find_package(Threads REQUIRED)
+find_package(fmt REQUIRED)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 # --- OpenGL ---
 if(UNIX)
@@ -53,7 +55,8 @@ if(UNIX)
     OpenGL::GL
     glfw
     GLEW::GLEW 
-    ${NVML_LIB})
+    ${NVML_LIB}
+    fmt::fmt)
 endif()
 
 # --- Include dirs (GLAD & GLFW headers) ---
