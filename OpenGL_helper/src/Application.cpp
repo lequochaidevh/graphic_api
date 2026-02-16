@@ -29,6 +29,7 @@
 #include "tests/TestSandbox.h"
 #include "tests/TestTextureRainbow.h"
 #include "tests/TestTextureIndex.h"
+#include "tests/TestDynamicGeometry.h"
 
 #include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
@@ -76,6 +77,7 @@ int main() {
     testMenuPtr->RegisterTest<test::TestSandbox>("Sandbox base");
     testMenuPtr->RegisterTest<test::TestTextureRainbow>("Texture Rainbow");
     testMenuPtr->RegisterTest<test::TestTextureIndex>("Texture Index");
+    testMenuPtr->RegisterTest<test::TestDynamicGeometry>("Dynamic Geometry");
     while (!glfwWindowShouldClose(window)) {
         renderer.Clear();
 
