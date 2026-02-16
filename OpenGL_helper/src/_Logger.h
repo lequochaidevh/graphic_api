@@ -8,6 +8,15 @@
 #include <chrono>
 #include <fmt/color.h>
 
+#include <thread>    // get info
+#include <unistd.h>  // get process id
+#include <sys/syscall.h>
+#include <unistd.h>
+
+static inline uint32_t get_tid() {
+    return static_cast<uint32_t>(::syscall(SYS_gettid));
+}
+
 inline const char* short_file_name(const char* path) {
     const char* file = std::strrchr(path, '/');
     return file ? file + 1 : path;
@@ -49,16 +58,19 @@ class Logger {
         localtime_r(&t, &tm_buf);
 
         char time_buffer[32];
-        std::strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S",
+        std::strftime(time_buffer, sizeof(time_buffer), "%y-%m-%d %H:%M:%S",
                       &tm_buf);
 
         std::string time = time_buffer;
 
         std::string msg = fmt::format(fmt_str, std::forward<Args>(args)...);
 
+        pid_t    pid = ::getpid();
+        uint32_t tid = get_tid();
+
         std::string final_msg =
-            fmt::format("[{}] [{}] {}:{} {}() : {}", time,
-                        level_to_string(msg_level), file, line, func, msg);
+            fmt::format("[{}][P:{}][T:{}] {}:{} {} : {}", time, pid, tid, file,
+                        line, func, msg);
 
         std::lock_guard<std::mutex> lock(mutex_);
 
@@ -148,7 +160,16 @@ class Logger {
 // TODO:
 // ok: ver1: Compile-time disable DEBUG
 // Zero-cost if level disabled
-// Colorized output
+// ok: ver1: Colorized output
 // Async logging
 // Ring buffer realtime safe
 // Lock-free logger
+
+// ok: ver1: Add thread and process id info:
+// clang-format off
+// [26-02-17 04:10:14][P:49371][T:49372] Application.cpp:51 operator() : THREAD Worker running
+// [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:67 main : === PARENT ===
+// [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:68 main : getpid 49371 CHILD_PID: 49373
+// [26-02-17 04:10:14][P:49373][T:49373] Application.cpp:63 main : === CHILD ===
+// [26-02-17 04:10:14][P:49373][T:49373] Application.cpp:64 main : getpid 49373
+// clang-format on

@@ -9,6 +9,9 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "Renderer.h"
 #include "VertexBufferLayout.h"
@@ -44,6 +47,28 @@ int main() {
     LOG_WARN("ABC {} {}", a, b);
     LOG_ERROR("ABC {} {}", a, b);
     LOG_CRITICAL("ABC {} {}", a, b);
+
+    std::thread t([] { LOG_INFO("THREAD Worker running"); });
+    t.join();
+
+    pid_t child = fork();
+
+    if (child < 0) {
+        perror("fork failed");
+        return 1;
+    }
+
+    if (child == 0) {
+        // Child process
+        LOG_INFO("=== CHILD ===");
+        LOG_INFO("getpid {} ", getpid());
+    } else {
+        // Parent process
+        LOG_INFO("=== PARENT ===");
+        LOG_INFO("getpid {} CHILD_PID: {}", getpid(), child);
+
+        wait(nullptr);  // wait child end
+    }
 
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW\n";
