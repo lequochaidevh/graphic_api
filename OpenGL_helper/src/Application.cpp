@@ -38,15 +38,20 @@
 #include <iostream>
 
 #include "_Logger.h"
+#include "_Logger_Core.h"
 
 int main() {
+    std::thread t1([] { LOG_INFO("THREAD Worker running"); });
+    t1.join();
     int a = 3, b = 4;
+    LOG_SET_FILE_STORE(LOGER_FILE_DEFAULT_PATH);
     LOG_TRACE("ABC {} {}", a, b);
     LOG_DEBUG("ABC {} {}", a, b);
     LOG_INFO("ABC {} {}", a, b);
     LOG_WARN("ABC {} {}", a, b);
     LOG_ERROR("ABC {} {}", a, b);
     LOG_CRITICAL("ABC {} {}", a, b);
+
     LOG_SET_BACKEND;  // set backend is AsyncLogger
     async_log_trace("ABC {} {}", a, b);
     async_log_debug("ABC {} {}", a, b);
@@ -54,11 +59,28 @@ int main() {
     async_log_warn("ABC {} {}", a, b);
     async_log_error("ABC {} {}", a, b);
     async_log_critical("ABC {} {}", a, b);
-
-    // LOG_BACKEND_STOP;  // sync queue
+    LOG_BACKEND_STOP;  // sync queue // critical safety TODO handle if not
+                       // called
 
     std::thread t([] { LOG_INFO("THREAD Worker running"); });
     t.join();
+
+    CORE_LOG_SET_FILE_STORE(CORE_LOGER_FILE_DEFAULT_PATH);
+    CORE_LOG_TRACE("CORE {} {}", a, b);
+    CORE_LOG_DEBUG("CORE {} {}", a, b);
+    CORE_LOG_INFO("CORE {} {}", a, b);
+    CORE_LOG_WARN("CORE {} {}", a, b);
+    CORE_LOG_ERROR("CORE {} {}", a, b);
+    CORE_LOG_CRITICAL("CORE {} {}", a, b);
+
+    CORE_LOG_SET_BACKEND;
+    async_core_log_trace("CORE ABC {} {}", a, b);
+    async_core_log_debug("CORE ABC {} {}", a, b);
+    async_core_log_info("CORE ABC {} {}", a, b);
+    async_core_log_warn("CORE ABC {} {}", a, b);
+    async_core_log_error("CORE ABC {} {}", a, b);
+    async_core_log_critical("CORE ABC {} {}", a, b);
+    CORE_LOG_BACKEND_STOP;  // critical safety
 
     pid_t child = fork();
 

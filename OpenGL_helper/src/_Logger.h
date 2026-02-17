@@ -112,7 +112,11 @@ class Logger {
 
     void set_file(const std::string& filename) {
         std::lock_guard<std::mutex> lock(mutex_);
-        file_.open(filename, std::ios::app);
+        if (file_.is_open()) {
+            file_.close();
+            file_.clear();  // reset failbit
+        }
+        file_.open(filename, std::ios::out | std::ios::app | std::ios::binary);
     }
 
     template <typename... Args>
@@ -141,20 +145,25 @@ class Logger {
             fmt::format("[{}][P:{}][T:{}] {}:{} {} : {}", time, pid, tid, file,
                         line, func, msg);
 
+        std::string log_msg_with_color =
+            get_color_code(msg_level) + level_to_string(msg_level) +
+            std::move(final_msg) + reset_color_code();
         if (backend_ && backend_->get_is_running_status()) {
-            std::string log_msg_with_color =
-                get_color_code(msg_level) + level_to_string(msg_level) +
-                std::move(final_msg) + reset_color_code();
             backend_->log(std::move(log_msg_with_color));
             return;
         } else {
             // fallback sync
             std::lock_guard<std::mutex> lock(mutex_);
-            if (file_.is_open()) file_ << final_msg << '\n';
+            if (file_.is_open()) file_ << log_msg_with_color << '\n';
         }
 
         print_colored(msg_level, final_msg);
     }
+
+    void setup_corelog(const std::string& filename);
+    template <typename... Args>
+    void core_log(LogLevel msg_level, const char* file, int line,
+                  const char* func, const char* fmt_str, Args&&... args);
 
  public:
     void set_backend(AsyncLogger& backend) { backend_ = &backend; }
@@ -249,7 +258,7 @@ class Logger {
 
  private:
     LogLevel      level_;
-    std::ofstream file_;
+    std::ofstream file_, core_file_;
     std::mutex    mutex_;
 
  private:
@@ -257,8 +266,11 @@ class Logger {
 };
 
 #define LOG_BACKEND AsyncLogger
-#define ASYNC_LOGER_FILE_PATH \
-    "/home/devh/engine001/graphic_api/OpenGL_helper/async.log"
+
+#define ASYNC_LOGER_FILE_PATH   "/tmp/async.log"
+#define LOGER_FILE_DEFAULT_PATH "/tmp/sync.log"
+#define LOG_SET_FILE_STORE(X)   Logger::instance().set_file(X)
+
 #define LOG_SET_BACKEND   Logger::instance().set_backend(LOG_BACKEND::instance())
 #define LOG_BACKEND_START LOG_BACKEND::instance().start(ASYNC_LOGER_FILE_PATH)
 #define LOG_BACKEND_STOP  LOG_BACKEND::instance().stop()
