@@ -13,6 +13,11 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include <queue>  // async log
+#include <condition_variable>
+#include <atomic>
+#include <memory>
+
 static inline uint32_t get_tid() {
     return static_cast<uint32_t>(::syscall(SYS_gettid));
 }
@@ -24,13 +29,77 @@ inline const char* short_file_name(const char* path) {
 
 enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, OFF };
 
-#ifndef LOG_ACTIVE_LEVEL
+#ifndef LOG_ACTIVE_LEVEL  // compile time
 #define LOG_ACTIVE_LEVEL LogLevel::TRACE
 #endif
 
 constexpr bool is_enabled(LogLevel level) {
     return static_cast<int>(level) >= static_cast<int>(LOG_ACTIVE_LEVEL);
 }
+
+class AsyncLogger {
+ public:
+    static AsyncLogger& instance() {
+        static AsyncLogger inst;
+        return inst;
+    }
+
+    void start(const std::string& filename) {
+        running_ = true;
+        file_.open(filename, std::ios::out | std::ios::app);
+
+        worker_ = std::thread([this] { this->process(); });
+    }
+
+    void stop() {
+        running_ = false;
+        cv_.notify_all();
+        if (worker_.joinable()) worker_.join();
+
+        file_.flush();
+        file_.close();
+    }
+
+    void log(std::string msg) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            queue_.push(std::move(msg));
+        }
+        cv_.notify_one();
+    }
+
+    bool get_is_running_status() const { return running_.load(); }
+
+ private:
+    AsyncLogger() = default;
+    ~AsyncLogger() { stop(); }
+
+    void process() {
+        while (running_ || !queue_.empty()) {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            cv_.wait(lock, [&] { return !running_ || !queue_.empty(); });
+
+            while (!queue_.empty()) {
+                auto msg = std::move(queue_.front());
+                queue_.pop();
+                lock.unlock();
+
+                file_ << msg << '\n';
+
+                lock.lock();
+            }
+        }
+    }
+
+ private:
+    std::queue<std::string> queue_;
+    std::mutex              mutex_;
+    std::condition_variable cv_;
+    std::thread             worker_;
+    std::atomic<bool>       running_{false};
+    std::ofstream           file_;
+};
 
 class Logger {
  public:
@@ -72,16 +141,37 @@ class Logger {
             fmt::format("[{}][P:{}][T:{}] {}:{} {} : {}", time, pid, tid, file,
                         line, func, msg);
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        if (backend_ && backend_->get_is_running_status()) {
+            std::string log_msg_with_color =
+                get_color_code(msg_level) + level_to_string(msg_level) +
+                std::move(final_msg) + reset_color_code();
+            backend_->log(std::move(log_msg_with_color));
+            return;
+        } else {
+            // fallback sync
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (file_.is_open()) file_ << final_msg << '\n';
+        }
 
         print_colored(msg_level, final_msg);
-
-        if (file_.is_open()) file_ << final_msg;
     }
 
- private:
-    Logger() : level_(LogLevel::TRACE) {}
+ public:
+    void set_backend(AsyncLogger& backend) { backend_ = &backend; }
+    bool get_backend_is_asigned_status() { return backend_ != nullptr; }
 
+ private:
+    Logger() : level_(LogLevel::TRACE) {
+        pthread_atfork(  // designed fork for singleton
+            []() {
+                if (Logger::instance().backend_)
+                    Logger::instance().backend_->stop();
+            },
+            []() {}, []() { Logger::instance().backend_ = nullptr; });
+    }
+    ~Logger() {
+        if (backend_->get_is_running_status()) backend_->stop();
+    }
     void print_colored(LogLevel level, const std::string& msg) {
         switch (level) {
             case LogLevel::TRACE:
@@ -111,27 +201,48 @@ class Logger {
             case LogLevel::CRITICAL:
                 fmt::print(fmt::fg(fmt::color::white) |
                                fmt::bg(fmt::color::red) | fmt::emphasis::bold,
-                           "{}", msg);
+                           "{}", msg);  // fix bug bkgrd not clean
                 fmt::print("\033[0m");
                 fmt::print("{}", "\n");
                 break;
         }
     }
 
-    const char* level_to_string(LogLevel lvl) {
+    std::string get_color_code(LogLevel level) {
+        switch (level) {
+            case LogLevel::TRACE:
+                return "\033[37m";
+            case LogLevel::DEBUG:
+                return "\033[36m";
+            case LogLevel::INFO:
+                return "\033[32m";
+            case LogLevel::WARN:
+                return "\033[33m";
+            case LogLevel::ERROR:
+                return "\033[31m";
+            case LogLevel::CRITICAL:
+                return "\033[41m";
+            default:
+                return "\033[0m";
+        }
+    }
+
+    std::string reset_color_code() { return "\033[0m"; }
+
+    std::string level_to_string(LogLevel lvl) {
         switch (lvl) {
             case LogLevel::TRACE:
-                return "TRACE";
+                return "[TRACE] ";
             case LogLevel::DEBUG:
-                return "DEBUG";
+                return "[DEBUG] ";
             case LogLevel::INFO:
-                return "INFO";
+                return "[INFO] ";
             case LogLevel::WARN:
-                return "WARN";
+                return "[WARN] ";
             case LogLevel::ERROR:
-                return "ERROR";
+                return "[ERROR] ";
             case LogLevel::CRITICAL:
-                return "CRITICAL";
+                return "[CRITICAL] ";
         }
         return "";
     }
@@ -140,7 +251,17 @@ class Logger {
     LogLevel      level_;
     std::ofstream file_;
     std::mutex    mutex_;
+
+ private:
+    AsyncLogger* backend_ = nullptr;
 };
+
+#define LOG_BACKEND AsyncLogger
+#define ASYNC_LOGER_FILE_PATH \
+    "/home/devh/engine001/graphic_api/OpenGL_helper/async.log"
+#define LOG_SET_BACKEND   Logger::instance().set_backend(LOG_BACKEND::instance())
+#define LOG_BACKEND_START LOG_BACKEND::instance().start(ASYNC_LOGER_FILE_PATH)
+#define LOG_BACKEND_STOP  LOG_BACKEND::instance().stop()
 
 #define LOG_IMPL(level, fmt, ...)                                              \
     do {                                                                       \
@@ -157,19 +278,33 @@ class Logger {
 #define LOG_ERROR(fmt, ...)    LOG_IMPL(LogLevel::ERROR, fmt, ##__VA_ARGS__)
 #define LOG_CRITICAL(fmt, ...) LOG_IMPL(LogLevel::CRITICAL, fmt, ##__VA_ARGS__)
 
+#define ASYNC_LOG_IMPL(LOGFUNC, ...)                          \
+    if (Logger::instance().get_backend_is_asigned_status()) { \
+        if (!LOG_BACKEND::instance().get_is_running_status()) \
+            LOG_BACKEND_START;                                \
+        LOGFUNC(__VA_ARGS__);                                 \
+    }
+
+#define async_log_trace(...)    ASYNC_LOG_IMPL(LOG_TRACE, __VA_ARGS__)
+#define async_log_debug(...)    ASYNC_LOG_IMPL(LOG_DEBUG, __VA_ARGS__)
+#define async_log_info(...)     ASYNC_LOG_IMPL(LOG_INFO, __VA_ARGS__)
+#define async_log_warn(...)     ASYNC_LOG_IMPL(LOG_WARN, __VA_ARGS__)
+#define async_log_error(...)    ASYNC_LOG_IMPL(LOG_ERROR, __VA_ARGS__)
+#define async_log_critical(...) ASYNC_LOG_IMPL(LOG_CRITICAL, __VA_ARGS__)
+
+// clang-format off
 // TODO:
-// ok: ver1: Compile-time disable DEBUG
-// Zero-cost if level disabled
+// ok: ver1: Compile-time disable DEBUG - Zero-cost if level disabled
 // ok: ver1: Colorized output
-// Async logging
+// ok: ver1: Async logging - GOOD NOTE about singleton...
 // Ring buffer realtime safe
 // Lock-free logger
 
 // ok: ver1: Add thread and process id info:
-// clang-format off
-// [26-02-17 04:10:14][P:49371][T:49372] Application.cpp:51 operator() : THREAD Worker running
-// [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:67 main : === PARENT ===
-// [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:68 main : getpid 49371 CHILD_PID: 49373
-// [26-02-17 04:10:14][P:49373][T:49373] Application.cpp:63 main : === CHILD ===
-// [26-02-17 04:10:14][P:49373][T:49373] Application.cpp:64 main : getpid 49373
+// [26-02-17 04:10:14][P:49371][T:49372] Application.cpp:51 operator() : THREAD
+// Worker running [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:67 main
+// : === PARENT === [26-02-17 04:10:14][P:49371][T:49371] Application.cpp:68
+// main : getpid 49371 CHILD_PID: 49373 [26-02-17 04:10:14][P:49373][T:49373]
+// Application.cpp:63 main : === CHILD === [26-02-17 04:10:14][P:49373][T:49373]
+// Application.cpp:64 main : getpid 49373
 // clang-format on

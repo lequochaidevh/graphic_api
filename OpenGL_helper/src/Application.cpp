@@ -47,6 +47,15 @@ int main() {
     LOG_WARN("ABC {} {}", a, b);
     LOG_ERROR("ABC {} {}", a, b);
     LOG_CRITICAL("ABC {} {}", a, b);
+    LOG_SET_BACKEND;  // set backend is AsyncLogger
+    async_log_trace("ABC {} {}", a, b);
+    async_log_debug("ABC {} {}", a, b);
+    async_log_info("ABC {} {}", a, b);
+    async_log_warn("ABC {} {}", a, b);
+    async_log_error("ABC {} {}", a, b);
+    async_log_critical("ABC {} {}", a, b);
+
+    // LOG_BACKEND_STOP;  // sync queue
 
     std::thread t([] { LOG_INFO("THREAD Worker running"); });
     t.join();
