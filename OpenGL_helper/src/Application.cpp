@@ -33,6 +33,7 @@
 #include "tests/TestTextureRainbow.h"
 #include "tests/TestTextureIndex.h"
 #include "tests/TestDynamicGeometry.h"
+#include "tests/TestBigIndices.h"
 
 #include "nvdia/NVDIA_Debugger.h"
 #include <iostream>
@@ -144,6 +145,7 @@ int main() {
     testMenuPtr->RegisterTest<test::TestTextureRainbow>("Texture Rainbow");
     testMenuPtr->RegisterTest<test::TestTextureIndex>("Texture Index");
     testMenuPtr->RegisterTest<test::TestDynamicGeometry>("Dynamic Geometry");
+    testMenuPtr->RegisterTest<test::TestBigIndices>("Big Indices");
     while (!glfwWindowShouldClose(window)) {
         renderer.Clear();
 
